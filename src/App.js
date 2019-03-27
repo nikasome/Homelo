@@ -4,6 +4,7 @@ import logo from './logo.png';
 import axios from 'axios';
 import Form from 'react-jsonschema-form';
 import { BrowserRouter, Switch, Route, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 const HOMETE_LIST = [
   { homete_id: 'AAAA', title: 'ラーメン完飲' },
@@ -48,34 +49,52 @@ const uischema = {
 const formData = {};
 
 const App = () => (
-  <BrowserRouter>
-    <Switch>
-      <Route exact path="/" component={Home} />
-      <Route path="/homete/post" component={HometePost} />
-      <Route path="/homete/:id" component={Homete} />
-    </Switch>
-  </BrowserRouter>
+  <div>
+    <Helmet>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Homelo</title>
+    </Helmet>
+
+    <div>
+      <h1>
+        <img src={logo} alt="logo" />
+      </h1>
+    </div>
+
+    <BrowserRouter>
+      <Switch>
+        <Route exact path="/" component={Home} />
+        <Route path="/post" component={HometePost} />
+        <Route path="/homete/:id" component={Homete} />
+      </Switch>
+    </BrowserRouter>
+  </div>
 );
 
 class Home extends Component {
   render() {
     return (
       <div>
-        <img src={logo} className="img" alt="logo" />
+        <Link to="/post" className="homete-create-button">
+          <i>+</i>
+        </Link>
 
         <ul>
           {HOMETE_LIST.map(function(homete, i) {
             return (
-              <div key={i}>
-                <Link to={'/homete/' + homete.homete_id}>{homete.title}</Link>
+              <div id="homete-button-rapper">
+                <Link to={'/homete/' + homete.homete_id}>
+                  <li id="homete-button" key={i}>
+                    <div>
+                      <p>{homete.title}</p>
+                    </div>
+                  </li>
+                </Link>
               </div>
             );
           })}
         </ul>
-
-        <Link to="/homete_post">
-          <button>投稿</button>
-        </Link>
       </div>
     );
   }
@@ -110,13 +129,15 @@ class HometePost extends Component {
 
   render() {
     return (
-      <div>
-        <Form
-          schema={schema}
-          formData={formData}
-          uiSchema={uischema}
-          onSubmit={this.handleSubmit}
-        />
+      <div id="form-container">
+        <div id="form-rapper">
+          <Form
+            schema={schema}
+            formData={formData}
+            uiSchema={uischema}
+            onSubmit={this.handleSubmit}
+          />
+        </div>
       </div>
     );
   }

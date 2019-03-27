@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import './App.css';
-import { BrowserRouter, Route, Link } from 'react-router-dom';
+import logo from './logo.png';
+import axios from 'axios';
+import Form from 'react-jsonschema-form';
+import { BrowserRouter, Switch, Route, Link } from 'react-router-dom';
 
 const HOMETE_LIST = [
   { homete_id: 'AAAA', title: 'ラーメン完飲' },
@@ -9,13 +12,48 @@ const HOMETE_LIST = [
   { homete_id: 'DDDD', title: '100点とった' }
 ];
 
+const schema = {
+  title: 'Homete',
+  type: 'object',
+  properties: {
+    title: {
+      title: 'タイトル',
+      type: 'string'
+    },
+    pin: {
+      title: 'pin',
+      type: 'integer',
+      minimum: 4
+    },
+    description: {
+      title: 'description',
+      type: 'string'
+    }
+  },
+  required: ['title', 'pin', 'description']
+};
+
+const uischema = {
+  title: {
+    'ui:autofocus': true
+  },
+  pin: {
+    'ui:placeholder': '4桁の数字'
+  },
+  description: {
+    'ui:widget': 'textarea'
+  }
+};
+
+const formData = {};
+
 const App = () => (
   <BrowserRouter>
-    <div>
+    <Switch>
       <Route exact path="/" component={Home} />
-      <Route path="/homete_post" component={Post} />
+      <Route path="/homete/post" component={HometePost} />
       <Route path="/homete/:id" component={Homete} />
-    </div>
+    </Switch>
   </BrowserRouter>
 );
 
@@ -23,15 +61,8 @@ class Home extends Component {
   render() {
     return (
       <div>
-        <h1>メイン画面</h1>
-        <ul>
-          <li>
-            <Link to="/homete_post">投稿する</Link>
-          </li>
-          <li>
-            <Link to="/homete/123">見る</Link>
-          </li>
-        </ul>
+        <img src={logo} className="img" alt="logo" />
+
         <ul>
           {HOMETE_LIST.map(function(homete, i) {
             return (
@@ -41,16 +72,51 @@ class Home extends Component {
             );
           })}
         </ul>
+
+        <Link to="/homete_post">
+          <button>投稿</button>
+        </Link>
       </div>
     );
   }
 }
 
-class Post extends Component {
+class HometePost extends Component {
+  make_id() {
+    // 生成する文字列の長さ
+    var l = 8;
+
+    // 生成する文字列に含める文字セット
+    var c = 'abcdefghijklmnopqrstuvwxyz0123456789';
+
+    var cl = c.length;
+    var r = '';
+    for (var i = 0; i < l; i++) {
+      r += c[Math.floor(Math.random() * cl)];
+    }
+    return r;
+  }
+
+  handleSubmit({ formData }) {
+    //sample post
+    axios.post('/', {
+      title: formData.title,
+      pin: formData.pin,
+      description: formData.description,
+      homete_id: this.make_id()
+    });
+    //console.log(formData);
+  }
+
   render() {
     return (
       <div>
-        <h1>Homete投稿画面</h1>
+        <Form
+          schema={schema}
+          formData={formData}
+          uiSchema={uischema}
+          onSubmit={this.handleSubmit}
+        />
       </div>
     );
   }

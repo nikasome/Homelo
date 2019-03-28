@@ -44,12 +44,6 @@ const formData = {};
 
 const shortid = require('shortid');
 
-const ABOUT_HOMETE = {
-  title: 'ラーメン完飲',
-  description: 'こってりでした',
-  homents: ['はいプロ', '神', '天才']
-};
-
 const SERVER_URL = 'http://ichigo.work:8080/';
 
 const App = () => (
@@ -70,7 +64,7 @@ const App = () => (
       <Switch>
         <Route exact path="/" component={Home} />
         <Route path="/post" component={withRouter(HometePost)} />
-        <Route path="/homete/:id" component={Homete} />
+        <Route path="/homete/:id" component={withRouter(Homete)} />
       </Switch>
     </BrowserRouter>
   </div>
@@ -170,9 +164,10 @@ class Homete extends Component {
     super(props);
     this.state = {
       about_homete: [],
-      homents: [],
-      homent: ''
+
+      homment: ''
     };
+    this.send_homment = this.send_homment.bind(this);
   }
 
   componentDidMount() {
@@ -182,8 +177,7 @@ class Homete extends Component {
       })
       .then(results => {
         this.setState({
-          about_homete: results.data,
-          homents: results.data.hometes
+          about_homete: results.data
         });
       })
       .catch(e => {
@@ -191,8 +185,23 @@ class Homete extends Component {
       });
   }
 
-  send_homent() {
-    console.log('A');
+  send_homment() {
+    var id = '/homete/' + this.props.match.params.id;
+    {
+      this.state.homment != ''
+        ? axios
+            .post(SERVER_URL + 'create_homment', {
+              homete_id: this.props.match.params.id,
+              message: this.state.homment
+            })
+            .then(results => {
+              this.props.history.push('/');
+            })
+            .catch(e => {
+              console.log(e);
+            })
+        : console.log('Nothing');
+    }
   }
 
   render() {
@@ -203,13 +212,13 @@ class Homete extends Component {
           {this.state.about_homete.description}
         </p>
         <ul>
-          {this.state.homents
-            ? this.state.homents.map((homent, i) => {
+          {this.state.about_homete.homments
+            ? this.state.about_homete.homments.map((h, i) => {
                 return (
                   <div id="homete-button-rapper">
                     <li id="homent" key={i}>
                       <div>
-                        <p>{homent}</p>
+                        <p>{h}</p>
                       </div>
                     </li>
                   </div>
@@ -219,14 +228,13 @@ class Homete extends Component {
         </ul>
         <div id="form-container">
           <div id="form-rapper">
-            <label for="Homent">Homent</label>
+            <label for="Homent">Homment</label>
             <input
               type="text"
-              name="homent"
-              value={this.state.homent}
-              onChange={e => this.setState({ homent: e.target.valule })}
+              value={this.state.homment}
+              onChange={e => this.setState({ homment: e.target.value })}
             />
-            <button onClick={() => this.send_homent()}>ほめる</button>
+            <button onClick={() => this.send_homment()}>ほめる</button>
           </div>
         </div>
       </div>

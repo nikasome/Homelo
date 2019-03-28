@@ -71,6 +71,7 @@ a {
   #form-rapper button {
     display: block;
     color: white;
+    height: 5vh;
     font-weight: bold;
     border-radius: 4px;
     border: solid 3px #6091d3;

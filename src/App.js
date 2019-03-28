@@ -3,15 +3,9 @@ import './App.css';
 import logo from './logo.png';
 import axios from 'axios';
 import Form from 'react-jsonschema-form';
+import { withRouter } from 'react-router';
 import { BrowserRouter, Switch, Route, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-
-const HOMETE_LIST = [
-  { homete_id: 'AAAA', title: 'ラーメン完飲' },
-  { homete_id: 'BBBB', title: '生きた' },
-  { homete_id: 'CCCC', title: '自炊した' },
-  { homete_id: 'DDDD', title: '100点とった' }
-];
 
 const schema = {
   title: 'Homete',
@@ -21,14 +15,14 @@ const schema = {
       title: 'タイトル',
       type: 'string'
     },
+    description: {
+      title: 'description',
+      type: 'string'
+    },
     pin: {
       title: 'pin',
       type: 'integer',
       minimum: 4
-    },
-    description: {
-      title: 'description',
-      type: 'string'
     }
   },
   required: ['title', 'pin', 'description']
@@ -38,15 +32,25 @@ const uischema = {
   title: {
     'ui:autofocus': true
   },
-  pin: {
-    'ui:placeholder': '4桁の数字'
-  },
   description: {
     'ui:widget': 'textarea'
+  },
+  pin: {
+    'ui:placeholder': 'Alexaと連携するための4桁の数字'
   }
 };
 
 const formData = {};
+
+const shortid = require('shortid');
+
+const ABOUT_HOMETE = {
+  title: 'ラーメン完飲',
+  description: 'こってりでした',
+  homents: ['はいプロ', '神', '天才']
+};
+
+const SERVER_URL = 'http://ichigo.work:8080/';
 
 const App = () => (
   <div>
@@ -56,16 +60,16 @@ const App = () => (
       <title>Homelo</title>
     </Helmet>
 
-    <div>
-      <h1>
-        <img src={logo} alt="logo" />
-      </h1>
-    </div>
-
     <BrowserRouter>
+      <Link to="/">
+        <h1>
+          <img src={logo} alt="logo" />
+        </h1>
+      </Link>
+      <hr />
       <Switch>
         <Route exact path="/" component={Home} />
-        <Route path="/post" component={HometePost} />
+        <Route path="/post" component={withRouter(HometePost)} />
         <Route path="/homete/:id" component={Homete} />
       </Switch>
     </BrowserRouter>
@@ -73,6 +77,26 @@ const App = () => (
 );
 
 class Home extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      hometes: []
+    };
+  }
+
+  componentDidMount() {
+    axios
+      .get(SERVER_URL + 'homete_list')
+      .then(results => {
+        this.setState({
+          hometes: results.data.hometes
+        });
+      })
+      .catch(e => {
+        console.log(e);
+      });
+  }
+
   render() {
     return (
       <div>
@@ -81,7 +105,7 @@ class Home extends Component {
         </Link>
 
         <ul>
-          {HOMETE_LIST.map(function(homete, i) {
+          {this.state.hometes.map((homete, i) => {
             return (
               <div id="homete-button-rapper">
                 <Link to={'/homete/' + homete.homete_id}>
@@ -101,30 +125,28 @@ class Home extends Component {
 }
 
 class HometePost extends Component {
-  make_id() {
-    // 生成する文字列の長さ
-    var l = 8;
+  constructor(props) {
+    super(props);
 
-    // 生成する文字列に含める文字セット
-    var c = 'abcdefghijklmnopqrstuvwxyz0123456789';
-
-    var cl = c.length;
-    var r = '';
-    for (var i = 0; i < l; i++) {
-      r += c[Math.floor(Math.random() * cl)];
-    }
-    return r;
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   handleSubmit({ formData }) {
-    //sample post
-    axios.post('/', {
-      title: formData.title,
-      pin: formData.pin,
-      description: formData.description,
-      homete_id: this.make_id()
-    });
-    //console.log(formData);
+    var id = shortid.generate();
+    console.log(id);
+    axios
+      .post(SERVER_URL + 'create_homete', {
+        title: formData.title,
+        pin: formData.pin,
+        description: formData.description,
+        homete_id: id
+      })
+      .then(response => {
+        this.props.history.push('/');
+      })
+      .catch(error => {
+        console.log(error);
+      });
   }
 
   render() {
@@ -144,11 +166,69 @@ class HometePost extends Component {
 }
 
 class Homete extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      about_homete: [],
+      homents: [],
+      homent: ''
+    };
+  }
+
+  componentDidMount() {
+    axios
+      .get(SERVER_URL + 'about_homete', {
+        params: { homete_id: this.props.match.params.id }
+      })
+      .then(results => {
+        this.setState({
+          about_homete: results.data,
+          homents: results.data.hometes
+        });
+      })
+      .catch(e => {
+        console.log(e);
+      });
+  }
+
+  send_homent() {
+    console.log('A');
+  }
+
   render() {
-    let { id } = this.props.match.params;
     return (
       <div>
-        <h1>{id}</h1>
+        <h1>{this.state.about_homete.title}</h1>
+        <p className="homete-discription">
+          {this.state.about_homete.description}
+        </p>
+        <ul>
+          {this.state.homents
+            ? this.state.homents.map((homent, i) => {
+                return (
+                  <div id="homete-button-rapper">
+                    <li id="homent" key={i}>
+                      <div>
+                        <p>{homent}</p>
+                      </div>
+                    </li>
+                  </div>
+                );
+              })
+            : []}
+        </ul>
+        <div id="form-container">
+          <div id="form-rapper">
+            <label for="Homent">Homent</label>
+            <input
+              type="text"
+              name="homent"
+              value={this.state.homent}
+              onChange={e => this.setState({ homent: e.target.valule })}
+            />
+            <button onClick={() => this.send_homent()}>ほめる</button>
+          </div>
+        </div>
       </div>
     );
   }
